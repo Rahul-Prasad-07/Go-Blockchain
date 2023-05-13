@@ -1,12 +1,38 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
-	"github.com/gorilla/mux"
 	"log"
 	"net/http"
+
+	"github.com/gorilla/mux"
 )
+
+type Block struct {
+}
+
+type BookCheckout struct {
+}
+
+type Book struct {
+}
+
+type Blockchain struct {
+	blocks []*Block
+}
+
+var blockchain *Blockchain //global variable, we are going to use this to store our blockchain
+
+func getBlockchain() {
+
+}
+
+func writeBlock() {
+
+}
+
+func newBook() {
+
+}
 
 func main() {
 
