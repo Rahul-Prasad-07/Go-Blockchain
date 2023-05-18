@@ -1,8 +1,16 @@
 package main
 
 import (
+	"crypto/md5"
+	"encoding/json"
+	"fmt"
+	"io"
 	"log"
 	"net/http"
+
+	// "encoding/hex"
+	// "time"
+	// "crypto/sha256"
 
 	"github.com/gorilla/mux"
 )
@@ -58,7 +66,47 @@ func writeBlock() {
 
 }
 
-func newBook() {
+func newBook(w http.ResponseWriter, r *http.Request) {
+
+	var book Book
+
+	if err := json.NewDecoder(r.Body).Decode(&book); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Printf("Could not create new book: %v", err)
+		w.Write([]byte("could not create new book"))
+		return
+	}
+
+	//if there is no error then we are going to create a new book
+
+	// what this md5.new() is doing is it's creating a new hash
+	// what this line is doing is it's writing the string of book.ISBN+book.PublishDate to the hash
+	// what this line is doing is it's converting the hash to a string and storing it in the book.ID by using fmt.Sprintf("%x", h.Sum(nil))
+	// what this md5.new() is doing is it's creating a new hash
+
+	h := md5.New()
+	io.WriteString(h, book.ISBN+book.PublishDate)
+	book.ID = fmt.Sprintf("%x", h.Sum(nil))
+
+	// you have created the book and now you want to share that with user so you have to send the response back to the user
+	// so we are going to create a json response and send it back to the user
+
+	// what this line means is it's going to take the book struct and convert it into a json response. and it's going to indent it with "" and it's going to use space as a separator
+	// if there is an error then we are going to send the error back to the user
+
+	resp, err := json.MarshalIndent(book, "", " ")
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Printf("Could not marshal book payload to json: %v", err)
+		w.Write([]byte("could not save the book data"))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(resp)
+
+	// What's happening here : you have to send that created book as responseto the user. so for that u have convert in into the json response and send it back to the user
+	// after creating book, we are going to create a block and store the data of book in it: so the next func is writeBlock
 
 }
 
