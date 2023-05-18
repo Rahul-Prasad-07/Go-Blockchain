@@ -7,20 +7,29 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// we are creating four structs for our blockchain which are Block, BookCheckout, Book and Blockchain
+// It is used to store the data of the blockchain and the books
+
+// Block is used to store the data of the block
 type Block struct {
 }
 
+// BookCheckout is used to store the data of the book checkout
 type BookCheckout struct {
 }
 
+// Book is used to store the data of the book
 type Book struct {
 }
 
+// Blockchain is used to store the data of the blockchain
 type Blockchain struct {
 	blocks []*Block
 }
 
 var blockchain *Blockchain //global variable, we are going to use this to store our blockchain
+
+// we are creating three functions for our blockchain which are getBlockchain, writeBlock and newBook
 
 func getBlockchain() {
 
