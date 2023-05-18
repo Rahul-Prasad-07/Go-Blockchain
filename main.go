@@ -16,10 +16,20 @@ type Block struct {
 
 // BookCheckout is used to store the data of the book checkout
 type BookCheckout struct {
+	BookID           string `json:"book_ID"`
+	User             string `json:"user"`
+	BookcheckoutDate string `json:"bookcheckout_date"`
+	IsGenesis        string `json: "is_genesis"`
 }
 
 // Book is used to store the data of the book
+// when we hit new in route, It will create new book. but all the details of book will be store in the bookcheckout struct.
 type Book struct {
+	ID          string `json:"id"`
+	Title       string `json:"title"`
+	Author      string `json:"author"`
+	PublishDate string `json:"publishDate"`
+	ISBN        string `json:"isbn:"`
 }
 
 // Blockchain is used to store the data of the blockchain
