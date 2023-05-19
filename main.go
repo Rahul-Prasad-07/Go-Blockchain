@@ -9,10 +9,7 @@ import (
 	"io"
 	"log"
 	"net/http"
-
-	// "encoding/hex"
 	"time"
-	// "crypto/sha256"
 
 	"github.com/gorilla/mux"
 )
@@ -36,7 +33,7 @@ type BookCheckout struct {
 	BookID           string `json:"book_ID"`
 	User             string `json:"user"`
 	BookcheckoutDate string `json:"bookcheckout_date"`
-	IsGenesis        bool   `json: "is_genesis"`
+	IsGenesis        bool   `json:"is_genesis"`
 }
 
 // Book is used to store the data of the book
@@ -56,18 +53,12 @@ type Blockchain struct {
 
 // why we are not using any databse : Blockchain is itself a database. It's store the transactional information.
 // Block is created and store in this blockchain variable
-var blockchain *Blockchain //global variable, we are going to use this to store our blockchain
-
-// we are creating three functions for our blockchain which are getBlockchain, writeBlock and newBook
-
-func getBlockchain() {
-
-}
+var BlockChain *Blockchain //global variable, we are going to use this to store our blockchain
 
 // --> Here we are passing Book-id, Checkout Data
 func writeBlock(w http.ResponseWriter, r *http.Request) {
 
-	var checkoutitem *BookCheckout
+	var checkoutitem BookCheckout
 
 	// decode the jason data and store it in checkoutitem
 	if err := json.NewDecoder(r.Body).Decode(&checkoutitem); err != nil {
@@ -78,7 +69,7 @@ func writeBlock(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// if there is no error then we are going to create a new block
-	Blockchain.AddBlock(checkoutitem) // create new func AddBlock, which will add the block in the blockchain
+	BlockChain.AddBlock(checkoutitem) // create new func AddBlock, which will add the block in the blockchain
 
 }
 
@@ -139,16 +130,16 @@ func (b *Block) validateHash(hash string) bool {
 
 }
 
-func CreateBlock(prevBlock *Block, data BookCheckout) *Block {
+func CreateBlock(prevBlock *Block, checkoutitem BookCheckout) *Block {
 
 	// first we define block variable with empty Block struct
 	// then we are going to create a new block by passing prevBlock and data and other properties of block
 
 	block := &Block{}
-
 	block.Pos = prevBlock.Pos + 1
 	block.TimeStamp = time.Now().String()
-	block.PrevHash = prevBlock.PrevHash
+	block.Data = checkoutitem
+	block.PrevHash = prevBlock.Hash
 	block.generateHash() // we have to create generateHash func and generate has for this block
 
 	return block
@@ -223,24 +214,49 @@ func newBook(w http.ResponseWriter, r *http.Request) {
 //  we have slice of blocks but the first block is genesis block(which is the first block in the blockchain) and now create that func GenesisBlock()
 
 func NewBlockchain() *Blockchain {
-
 	return &Blockchain{[]*Block{GenesisBlock()}}
 }
 
 // --> now we have to create GenesisBlock func, it dosent take any argument and it returns genesis &block
 func GenesisBlock() *Block {
-
 	return CreateBlock(&Block{}, BookCheckout{IsGenesis: true})
+}
+
+// we are creating three functions for our blockchain which are getBlockchain, writeBlock and newBook
+
+func getBlockchain(w http.ResponseWriter, r *http.Request) {
+	jbytes, err := json.MarshalIndent(BlockChain.blocks, "", " ")
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(err)
+		return
+	}
+
+	io.WriteString(w, string(jbytes))
 }
 
 func main() {
 
-	Blockchain = NewBlockchain()
+	BlockChain = NewBlockchain()
 
 	r := mux.NewRouter()
 	r.HandleFunc("/", getBlockchain).Methods("GET")
 	r.HandleFunc("/", writeBlock).Methods("POST")
 	r.HandleFunc("/new", newBook).Methods("POST")
+
+	go func() {
+
+		for _, block := range BlockChain.blocks {
+
+			fmt.Printf("Prev. hash: %x\n", block.PrevHash)
+			bytes, _ := json.MarshalIndent(block.Data, "", "")
+			fmt.Printf("Data: %v\n", string(bytes))
+			fmt.Printf("Hash: %x\n", block.Hash)
+			fmt.Println()
+
+		}
+
+	}()
 
 	log.Println("listening on port 3000")
 
